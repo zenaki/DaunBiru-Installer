@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Name=Daun_Biru_Installer
+Comment="www.daunbiru.com"
+Exec=sudo -E ./home/zenaki/DaunBiru-Installer/install.sh
+Icon=/home/zenaki/DaunBiru-Installer/install.png
+Terminal=true
+Type=Application

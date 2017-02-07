@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Sarasvati ver 1.0.2-4
+Version=1.0.2-4
+Exec=/usr/local/bin/sarasvati
+Comment=Monita RTU Configuration Software (by PT. Daun Biru Engineering)
+Icon=/usr/share/pixmaps/dbe.png
+Type=Application
+Terminal=false
+StartupNotify=false
+Encoding=UTF-8
+Categories=Utility;Qt;
