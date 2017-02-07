@@ -204,8 +204,13 @@ install_monita_service() {
   echo "cp \"$DIR/$monita_service_exec\" /usr/local/bin/" | adddate >> $LOGFILE 2>&1 & disown
   cp "$DIR/$monita_service_exec" /usr/local/bin/
 
-  echo "cp \"$DIR/$monita_service_lib\" /usr/lib/x86_64-linux-gnu/" | adddate >> $LOGFILE 2>&1 & disown
-  cp "$DIR/$monita_service_lib" /usr/lib/x86_64-linux-gnu/
+  if [[ "$OSArch" == "x86_64" ]]; then
+    echo "cp \"$DIR/$monita_service_lib\" /usr/lib/x86_64-linux-gnu/" | adddate >> $LOGFILE 2>&1 & disown
+    cp "$DIR/$monita_service_lib" /usr/lib/x86_64-linux-gnu/
+  elif [[ "$OSArch" == "i686" ]]; then
+    echo "cp \"$DIR/$monita_service_lib\" /usr/lib/i386-linux-gnu/" | adddate >> $LOGFILE 2>&1 & disown
+    cp "$DIR/$monita_service_lib" /usr/lib/i386-linux-gnu/
+  fi
 
   echo "cp \"$DIR/$monita_service_daemon\" /etc/init.d/" | adddate >> $LOGFILE 2>&1 & disown
   cp "$DIR/$monita_service_daemon" /etc/init.d/
