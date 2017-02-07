@@ -240,14 +240,15 @@ install_sarasvati() {
 
   echo "cp \"$DIR/$sarasvati_exec\" /usr/bin" | adddate >> $LOGFILE 2>&1 & disown
   cp "$DIR/$sarasvati_exec" /usr/local/bin
+  chmod 777 /usr/local/bin/sarasvati
 
   echo "cp \"$DIR/$icon\" /usr/share/pixmaps/" | adddate >> $LOGFILE 2>&1 & disown
   cp "$DIR/$icon" /usr/share/pixmaps/
-  chmod 755 /usr/share/pixmaps/dbe.png
+  chmod 777 /usr/share/pixmaps/dbe.png
 
   echo "cp \"$DIR/$sarasvati_desktop\" /usr/share/applications/" | adddate >> $LOGFILE 2>&1 & disown
   cp "$DIR/$sarasvati_desktop" /usr/share/applications/
-  chmod +x /usr/share/applications/sarasvati.desktop
+  chmod 777 /usr/share/applications/sarasvati.desktop
 
   whiptail --title 'Sarasvati' --msgbox 'Installation Complete ..' 15 60
 }
