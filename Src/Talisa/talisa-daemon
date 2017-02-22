@@ -1,7 +1,7 @@
 #!/bin/bash
 
-PIDFILE=/var/www/html/talisa/passenger.1337.pid
-LOGFILE=/var/www/html/talisa/passenger.1337.log
+PIDFILE=/var/www/html/talisa/passenger.1965.pid
+LOGFILE=/var/www/html/talisa/passenger.1965.log
 
 start() {
   if [ -f $PIDFILE ] && kill -0 $(cat $PIDFILE); then
@@ -9,8 +9,7 @@ start() {
     return 1
   fi
   echo 'Starting service' >&2
-  cd /var/www/html/talisa
-  /opt/passenger/bin/passenger start
+  cd /var/www/html/talisa && /opt/passenger/bin/passenger start
   echo 'Service started' >&2
 }
 
@@ -20,8 +19,7 @@ stop() {
     return 1
   fi
   echo 'Stopping service' >&2
-  cd /var/www/html/talisa
-  /opt/passenger/bin/passenger stop
+  cd /var/www/html/talisa && /opt/passenger/bin/passenger stop
   echo 'Service stopped' >&2
 }
 
@@ -33,6 +31,7 @@ status() {
       printf "%s\n" "The process appears to be dead but pidfile still exists"
     else
       echo "Running, the PID is $PID"
+      cd /var/www/html/talisa && /opt/passenger/bin/passenger status
     fi
   else
     printf "%s\n" "Service not running"

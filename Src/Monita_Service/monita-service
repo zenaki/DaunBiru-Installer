@@ -52,18 +52,26 @@ uninstall() {
 }
 
 status() {
-        printf "%-50s" "Checking $NAME..."
-    if [ -f $PIDFILE ]; then
-	echo $VERSION
-        PID=$(cat $PIDFILE)
-            if [ -z "$(ps axf | grep ${PID} | grep -v grep)" ]; then
-                printf "%s\n" "The process appears to be dead but pidfile still exists"
-            else    
-                echo "Running, the PID is $PID"
-            fi
-    else
-        printf "%s\n" "Service not running"
-    fi
+  printf "%-50s" "Checking $NAME..."
+  if [ -f $PIDFILE ]; then
+	   echo $VERSION
+     PID=$(cat $PIDFILE)
+     if [ -z "$(ps axf | grep ${PID} | grep -v grep)" ]; then
+       printf "%s\n" "The process appears to be dead but pidfile still exists"
+     else
+       echo "Running, the PID is $PID"
+     fi
+  else
+    printf "%s\n" "Service not running"
+  fi
+}
+
+config() {
+  nano /.MonSerConfig/monita-cfg.json
+}
+
+config_db() {
+  nano /.MonSerConfig/monita-db.dbe
 }
 
 
@@ -84,6 +92,12 @@ case "$1" in
     stop
     start
     ;;
+  config)
+    config
+    ;;
+  config_db)
+    config_db
+    ;;
   *)
-    echo "Usage: $0 {start|stop|status|restart|uninstall}"
+    echo "Usage: $0 {start|stop|status|restart|uninstall|config|config_db}"
 esac
