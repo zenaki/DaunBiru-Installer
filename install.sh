@@ -13,6 +13,9 @@
 #                               \ \ \\ \ \-.  \\ \___  \\/_/\ \/\ \  __ \\ \ \____\ \ \____\ \  __\ \ \  __<
 #                               \ \_\\ \_\\"\_\\/\_____\  \ \_\ \ \_\ \_\\ \_____\\ \_____\\ \_____\\ \_\ \_\
 #                               \/_/ \/_/ \/_/ \/_____/   \/_/  \/_/\/_/ \/_____/ \/_____/ \/_____/ \/_/ /_/
+NOW=$(date +"%F")
+LOGFILE="install-$NOW.log"
+
 Version=$(lsb_release -r --short)
 Codename=$(lsb_release -c --short)
 OSArch=$(uname -m)
@@ -28,54 +31,12 @@ GENPASS=$(perl -le 'print crypt("$ENV{PASSWD}","\$$ENV{ALGO}\$$ENV{SALT}\$")')
 
 if [ "$GENPASS" == "$ORIGPASS" ]
 then
-  Sudo_Pass = $ENV{PASSWD}
+  Sudo_Pass=$ENV{PASSWD}
   echo $Sudo_Pass | sudo -S sleep 0
 else
   whiptail --title 'DaunBiru Installer' --msgbox 'Invalid Password' 15 60
   exit 1
 fi
-
-# if [ "$(id -nu)" != "root" ]; then
-#     sudo -k
-#     Sudo_Pass=$(whiptail --backtitle "DaunBiru Installer" --title "Authentication required" --passwordbox "Installing this software requires administrative privilege. Please authenticate to begin the installation.\n\n[sudo] Password for user $Server_User:" 12 50 3>&2 2>&1 1>&3-)
-#     # exec sudo -S -p '' "$0" "$@" <<< "$pass"
-#     # exit 1
-# fi
-
-# if [ "$(id -u)" != "0" ]; then
-#    echo "This script must be run as root" 1>&2
-#    exit 1
-#   # # current_user=$USER
-#   # # sudo "/home/$current_user/Belajar Bash Script/install.sh"
-#   # cd "$DIR"
-#   # sudo su
-#   # ./install.sh
-#   # exit 1
-# fi
-
-if [[ ("$Codename" != "trusty") ]]; then
-  if [[ ("$Codename" != "xenial") ]]; then
-    echo "This Computer : $Version $Codename $OSArch"
-    echo "This script must be run on Trusty or Xenial" 1>&2
-    exit 1
-  fi
-fi
-
-adddate() {
-    while IFS= read -r line; do
-        echo "$(date +"[%Y-%m-%d %H:%M:%S]") $line"
-    done
-}
-
-NOW=$(date +"%F")
-LOGFILE="install-$NOW.log"
-echo "-------------------------------------------------------" | adddate >> $LOGFILE 2>&1 & disown
-echo "--------------------START INSTALLER--------------------" | adddate >> $LOGFILE 2>&1 & disown
-echo "-------------------------------------------------------" | adddate >> $LOGFILE 2>&1 & disown
-
-# Version=$(lsb_release -r --short)
-# Codename=$(lsb_release -c --short)
-# OSArch=$(uname -m)
 
 monita4_src="Src/Monita4/monita4"
 monita4_database="Src/Monita4/monita4.sql"
@@ -100,14 +61,6 @@ sarasvati_exec="Src/Sarasvati/$Codename/$OSArch/sarasvati"
 sarasvati_desktop="Src/Sarasvati/sarasvati.desktop"
 
 icon="Src/dbe.png"
-
-# "$DIR/$sarasvati_exec"
-# exit 1
-
-# cp /etc/apt/sources.list /etc/apt/sources.list-bak
-# cat /etc/apt/sources.list | sed -e 's|# deb http://119.18.154.235/ubuntu hardy partner|deb http://119.18.154.235/ubuntu hardy partner|' | sed -e 's|# deb-src http://archive.canonical.com/ubuntu hardy partner|deb-src http://archive.canonical.com/ubuntu hardy partner|' > /etc/apt/sources.list-new
-# echo "deb http://packages.medibuntu.org/ hardy free non-free" >> /etc/apt/sources.list-new
-# mv /etc/apt/sources.list-new /etc/apt/sources.list
 
 monita4_dependencies=(
     'apache2'
@@ -140,7 +93,13 @@ sarasvati_dependencies=(
     'qt56serialport'
 )
 
-update_repo() {
+function adddate() {
+    while IFS= read -r line; do
+        echo "$(date +"[%Y-%m-%d %H:%M:%S]") $line"
+    done
+}
+
+function update_repo() {
   echo "sudo apt-get update" | adddate >> $LOGFILE 2>&1 & disown
   echo $Sudo_Pass | sudo -S apt-get update | adddate >> $LOGFILE 2>&1 & disown
   {
@@ -170,7 +129,7 @@ update_repo() {
   } | whiptail --title "Update Repository $OSArch $Version $Codename" --gauge "Update ..." 6 60 0
 }
 
-install_repo_q56() {
+function install_repo_qt56() {
   if (whiptail --title 'Monita Service Installer' --yesno 'Are you want to add qt56 repository ??' --yes-button 'Yes' --no-button 'No, Another time'  10 70) then
     if [[ $Codename == "trusty" ]]; then
       echo "sudo add-apt-repository 'deb http://119.18.154.235:8077/html/repo/qt561-trusty trusty main'" | adddate >> $LOGFILE 2>&1 & disown
@@ -208,7 +167,7 @@ install_repo_q56() {
   fi
 }
 
-check_package() {
+function check_package() {
   declare -a dependencies=("${!1}")
   # echo "${dependencies[@]}"
   for i in "${dependencies[@]}"
@@ -223,16 +182,16 @@ check_package() {
   return 1
 }
 
-install_dependencies() {
+function install_dependencies() {
   declare -a dependencies=("${!1}")
   if [[ ${dependencies[*]} =~ $(echo '\<mysql-server\>') ]]; then
     chkPkg=$(dpkg -s mysql-server | grep installed)
     if [ "$chkPkg" == "" ]; then
       while (true)
       do
-        password=$(whiptail --passwordbox "Enter MySQL Server password for \"root\" : " 10 60 3>&1 1>&2 2>&3)
+        password=$(whiptail --passwordbox "[ NEW ] Enter MySQL Server password for \"root\" : " 10 60 3>&1 1>&2 2>&3)
         if [[ $password != "" ]]; then
-          password_again=$(whiptail --passwordbox "Enter Again MySQL Server password for \"root\" : " 10 60 3>&1 1>&2 2>&3)
+          password_again=$(whiptail --passwordbox "[ NEW ] Enter Again MySQL Server password for \"root\" : " 10 60 3>&1 1>&2 2>&3)
           if [[ $password == $password_again ]]; then break; fi
           whiptail --ok-button Back --msgbox "Incorrect Password" 10 30
         fi
@@ -273,7 +232,7 @@ install_dependencies() {
   } | whiptail --title "Install Dependencies $OSArch $Version $Codename" --gauge "Update ..." 6 60 0
 }
 
-change_permission_html() {
+function change_permission_html() {
   echo "sudo chgrp -R www-data /var/www/html" | adddate >> $LOGFILE 2>&1 & disown
   echo $Sudo_Pass | sudo -S chgrp -R www-data /var/www/html
   echo "sudo find /var/www/html -type d -exec chmod g+rx {} +" | adddate >> $LOGFILE 2>&1 & disown
@@ -294,13 +253,19 @@ change_permission_html() {
   echo $Sudo_Pass | sudo -S chmod -R o-rwx /var/www/html/
 }
 
-npm_install() {
+function npm_install() {
   # echo "npm --registry=http://119.18.154.235:5080 install" | adddate >> $LOGFILE 2>&1 & disown
   # npm --registry=http://119.18.154.235:5080  install | adddate >> $LOGFILE 2>&1 & disown
   echo "npm install" | adddate >> $LOGFILE 2>&1 & disown
   # npm install | adddate >> $LOGFILE 2>&1 & disown
   # npm install | adddate >> $LOGFILE 2>&1 & disown
   # npm --registry=http://119.18.154.235:5080 install
+  npm install sails
+  while (true)
+  do
+    proc=$(ps aux | grep -v grep | grep -e "npm")
+    if [[ "$proc" == "" ]]; then break; fi
+  done
   npm install
   # {
   #   sleep 0.1
@@ -328,16 +293,24 @@ npm_install() {
   # } | whiptail --title "NPM Install Dependencies" --gauge "Processing ..." 6 60 0
 }
 
-create_database() {
-  RESULT=$(mysqlshow --user=root --password=$password marine_2_dev| grep -v Wildcard | grep -o marine_2_dev)
+function create_database() {
+  if [[ "$password" == "" ]]; then
+    password=$(whiptail --passwordbox "Enter MySQL Server password for \"root\" : " 10 60 3>&1 1>&2 2>&3)
+  fi
+  RESULT=$(mysqlshow --user=root --password=$password monita4 | grep -v Wildcard | grep -o monita4)
   if [ "$RESULT" == "" ]; then
     echo "mysql -u root -p < $DIR/$monita4_database" | adddate >> $LOGFILE 2>&1 & disown
     mysql -uroot -p${password} < $DIR/$monita4_database
+    # while (true); do; proc=$(ps aux | grep -v grep | grep -e "mysql"); if [[ "$proc" == "" ]]; then break; fi; done
     # mysql -uroot -p${password} -e "CREATE DATABASE monita4 /*\!40100 DEFAULT CHARACTER SET utf8 */;"
-    mysql -uroot -p${password} -e "CREATE USER monita4@localhost IDENTIFIED BY 'monita4';"
-    mysql -uroot -p${password} -e "GRANT ALL PRIVILEGES ON marine_2_dev.* TO 'monita4'@'localhost';"
-    mysql -uroot -p${password} -e "FLUSH PRIVILEGES;"
   fi
+
+  mysql -uroot -p${password} -e "CREATE USER monita4@localhost IDENTIFIED BY 'monita4';"
+  # while (true); do; proc=$(ps aux | grep -v grep | grep -e "mysql"); if [[ "$proc" == "" ]]; then break; fi; done
+  mysql -uroot -p${password} -e "GRANT ALL PRIVILEGES ON monita4.* TO 'monita4'@'localhost';"
+  # while (true); do; proc=$(ps aux | grep -v grep | grep -e "mysql"); if [[ "$proc" == "" ]]; then break; fi; done
+  mysql -uroot -p${password} -e "FLUSH PRIVILEGES;"
+  # while (true); do; proc=$(ps aux | grep -v grep | grep -e "mysql"); if [[ "$proc" == "" ]]; then break; fi; done
 }
 
 install_monita4() {
@@ -345,8 +318,6 @@ install_monita4() {
     update_repo
   fi
   install_dependencies monita4_dependencies[@]
-
-  password=$(whiptail --passwordbox "Enter MySQL Server password for \"root\" : " 10 60 3>&1 1>&2 2>&3)
 
   create_database
 
@@ -358,6 +329,7 @@ install_monita4() {
   echo "sudo cp $DIR/$monita4_apache2_conf /etc/apache2/sites-available/" | adddate >> $LOGFILE 2>&1 & disown
   echo $Sudo_Pass | sudo -S cp "$DIR/$monita4_apache2_conf" /etc/apache2/sites-available/
 
+  clear
   port_listen=$(cat /etc/apache2/ports.conf | grep 'Listen 8066')
   if [[ "$port_listen" == "" ]]; then
     echo "Listen 8066" | sudo tee -a /etc/apache2/ports.conf
@@ -369,7 +341,9 @@ install_monita4() {
   echo "sudo service apache2 restart" | adddate >> $LOGFILE 2>&1 & disown
   echo $Sudo_Pass | sudo -S service apache2 restart
 
-  whiptail --title 'Monita4 Installer' --msgbox 'Installation Complete ..' 15 60
+  whiptail --title 'Monita4 Installer' --msgbox '
+  Installation Complete ..
+  http://localhost:8066' 15 60
 }
 
 install_talisa() {
@@ -427,30 +401,22 @@ install_talisa() {
     exitstatus=$?
     if [[ $exitstatus -ne 0 ]]; then
       whiptail --title 'Talisa Installer' --msgbox 'Installation Not Complete ..' 15 60
-      exit
-    fi
-    password=$(whiptail --passwordbox "Enter MySQL Server password for \"root\" : " 10 60 3>&1 1>&2 2>&3)
-    exitstatus=$?
-    if [[ $exitstatus -ne 0 ]]; then
-      whiptail --title 'Talisa Installer' --msgbox 'Installation Not Complete ..' 15 60
-      exit
+      exit 1
     fi
     if [[ "$server" != "" ]]; then
-      if [[ "$password" != "" ]]; then
-        break
-      fi
+      break
     fi
   done
   # sleep 2
 
   echo "
-  APP_URL=http://$server
+  APP_URL=http://$server:1965
   DB_REDIS=127.0.0.1
 
-  DB_MYSQL_HOST=localhost
-  DB_MYSQL_NAME=marine_2_dev
-  DB_MYSQL_USER=monita4
-  DB_MYSQL_PASS=monita4
+  DB_MYSQL_LOCAL_HOST=localhost
+  DB_MYSQL_LOCAL_NAME=monita4
+  DB_MYSQL_LOCAL_USER=monita4
+  DB_MYSQL_LOCAL_PASS=monita4
   " > /var/www/html/talisa/.env
   # sleep 2
 
@@ -461,38 +427,39 @@ install_talisa() {
 
   change_permission_html
 
-  echo "sudo cp \"$DIR/$talisa_apache2_conf\" /etc/apache2/site-available/" | adddate >> $LOGFILE 2>&1 & disown
-  echo $Sudo_Pass | sudo -S cp "$DIR/$talisa_apache2_conf" /etc/apache2/sites-available/
-  sleep 2
+  # echo "sudo cp \"$DIR/$talisa_apache2_conf\" /etc/apache2/site-available/" | adddate >> $LOGFILE 2>&1 & disown
+  # echo $Sudo_Pass | sudo -S cp "$DIR/$talisa_apache2_conf" /etc/apache2/sites-available/
+  # sleep 2
 
-  echo "sudo a2ensite talisa" | adddate >> $LOGFILE 2>&1 & disown
-  echo $Sudo_Pass | sudo -S a2dissite talisa.conf
-  echo $Sudo_Pass | sudo -S a2ensite talisa.conf
-  # whiptail --title 'Talisa Installer' --msgbox 'Enable Site Talisa ..' 15 60
-  sleep 2
-
+  # echo "sudo a2ensite talisa" | adddate >> $LOGFILE 2>&1 & disown
+  # echo $Sudo_Pass | sudo -S a2dissite talisa.conf
+  # echo $Sudo_Pass | sudo -S a2ensite talisa.conf
+  # # whiptail --title 'Talisa Installer' --msgbox 'Enable Site Talisa ..' 15 60
+  # sleep 2
+  clear
+  echo "Wait ..."
   echo "sudo a2enmod proxy" | adddate >> $LOGFILE 2>&1 & disown
-  echo $Sudo_Pass | sudo -S a2enmod proxy
+  echo $Sudo_Pass | sudo -S a2enmod proxy | adddate >> $LOGFILE 2>&1 & disown
   # whiptail --title 'Talisa Installer' --msgbox 'Enable Proxy Module ..' 15 60
   sleep 2
 
   echo "sudo a2enmod proxy_http" | adddate >> $LOGFILE 2>&1 & disown
-  echo $Sudo_Pass | sudo -S a2enmod proxy_http
+  echo $Sudo_Pass | sudo -S a2enmod proxy_http | adddate >> $LOGFILE 2>&1 & disown
   # whiptail --title 'Talisa Installer' --msgbox 'Enable Proxy HTTP Module ..' 15 60
   sleep 2
 
   echo "sudo a2enmod headers" | adddate >> $LOGFILE 2>&1 & disown
-  echo $Sudo_Pass | sudo -S a2enmod headers
+  echo $Sudo_Pass | sudo -S a2enmod headers | adddate >> $LOGFILE 2>&1 & disown
   # whiptail --title 'Talisa Installer' --msgbox 'Enable HEaders Module ..' 15 60
   sleep 2
 
   echo "sudo a2enmod rewrite" | adddate >> $LOGFILE 2>&1 & disown
-  echo $Sudo_Pass | sudo -S a2enmod rewrite
+  echo $Sudo_Pass | sudo -S a2enmod rewrite | adddate >> $LOGFILE 2>&1 & disown
   # whiptail --title 'Talisa Installer' --msgbox 'Enable Rewrite Module ..' 15 60
   sleep 2
 
   echo "sudo service apache2 restart" | adddate >> $LOGFILE 2>&1 & disown
-  echo $Sudo_Pass | sudo -S service apache2 restart
+  echo $Sudo_Pass | sudo -S service apache2 restart | adddate >> $LOGFILE 2>&1 & disown
   # whiptail --title 'Talisa Installer' --msgbox 'Restart Apache2 ..' 15 60
   sleep 2
 
@@ -520,6 +487,7 @@ install_talisa() {
   npm_install
 
   if (whiptail --title 'Talisa Installer' --yesno 'Are you want to run talisa-daemon now ??' --yes-button 'Yes' --no-button 'No, Another time'  10 70) then
+    clear
     echo "service talisa-daemon start" | adddate >> $LOGFILE 2>&1 & disown
     service talisa-daemon start
     sleep 2
@@ -528,11 +496,21 @@ install_talisa() {
     sleep 2
   fi
 
-  whiptail --title 'Talisa Installer' --msgbox 'Installation Complete ..' 15 60
+  whiptail --title 'Talisa Installer' --msgbox '
+  Installation Complete ..
+  http://localhost:1965' 15 60
 }
 
 install_monita_service() {
-  if check_package monita_service_dependencies[@]; then install_repo_q56; fi
+  if [[ ("$Codename" != "trusty") ]]; then
+    if [[ ("$Codename" != "xenial") ]]; then
+      echo "This Computer : $Version $Codename $OSArch"
+      echo "This script must be run on Trusty or Xenial" 1>&2
+      exit 1
+    fi
+  fi
+
+  if check_package monita_service_dependencies[@]; then install_repo_qt56; fi
   install_dependencies monita_service_dependencies[@]
 
   echo "sudo cp \"$DIR/$monita_service_exec\" /usr/local/bin/" | adddate >> $LOGFILE 2>&1 & disown
@@ -569,7 +547,15 @@ install_monita_service() {
 }
 
 install_sarasvati() {
-  if check_package sarasvati_dependencies[@]; then install_repo_q56; fi
+  if [[ ("$Codename" != "trusty") ]]; then
+    if [[ ("$Codename" != "xenial") ]]; then
+      echo "This Computer : $Version $Codename $OSArch"
+      echo "This script must be run on Trusty or Xenial" 1>&2
+      exit 1
+    fi
+  fi
+
+  if check_package sarasvati_dependencies[@]; then install_repo_qt56; fi
   install_dependencies sarasvati_dependencies[@]
 
   echo "sudo cp \"$DIR/$sarasvati_exec\" /usr/bin" | adddate >> $LOGFILE 2>&1 & disown
@@ -599,18 +585,21 @@ OPTION=$(whiptail --title "Menu" --menu "Choose your application will be install
 
 exitstatus=$?
 if [ $exitstatus == 0 ]; then
-  echo "Your chosen option:" $OPTION
+  echo "-------------------------------------------------------" | adddate >> $LOGFILE 2>&1 & disown
+  echo "--------------------START INSTALLER--------------------" | adddate >> $LOGFILE 2>&1 & disown
+  echo "-------------------------------------------------------" | adddate >> $LOGFILE 2>&1 & disown
+  # echo "Your chosen option:" $OPTION
   if [ $OPTION == 1 ]; then
-    echo "Your chosen option: Monita4"
+    # echo "Your chosen option: Monita4"
     install_monita4
   elif [ $OPTION == 2 ]; then
-    echo "Your chosen option: Talisa"
+    # echo "Your chosen option: Talisa"
     install_talisa
   elif [ $OPTION == 3 ]; then
-    echo "Your chosen option: Monita Service"
+    # echo "Your chosen option: Monita Service"
     install_monita_service
   elif [ $OPTION == 4 ]; then
-    echo "Your chosen option: Sarasvati"
+    # echo "Your chosen option: Sarasvati"
     install_sarasvati
   fi
 else
@@ -620,4 +609,3 @@ fi
 echo "-------------------------------------------------------" | adddate >> $LOGFILE 2>&1 & disown
 echo "---------------------END INSTALLER---------------------" | adddate >> $LOGFILE 2>&1 & disown
 echo "-------------------------------------------------------" | adddate >> $LOGFILE 2>&1 & disown
-clear
